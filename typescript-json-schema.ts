@@ -222,11 +222,19 @@ export module TJS {
                     return all;
                 }, {});
 
+                // temp make everything required
+                const required = props.filter((prop) => {
+                    return (prop.flags & ts.SymbolFlags.Optional) === 0;
+                }).map((prop) => {
+                    return prop.name;
+                });
+
                 const definition = {
                     type: "object",
                     title: fullName,
                     defaultProperties: [], // TODO: set via comment or parameter instead of hardcode here, json-editor specific
-                    properties: propertyDefinitions
+                    properties: propertyDefinitions,
+                    required: required
                 };
 
                 if (asRef) {

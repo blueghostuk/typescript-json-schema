@@ -173,11 +173,17 @@ var TJS;
                     }
                     return all;
                 }, {});
+                var required = props.filter(function (prop) {
+                    return (prop.flags & 536870912) === 0;
+                }).map(function (prop) {
+                    return prop.name;
+                });
                 var definition = {
                     type: "object",
                     title: fullName,
                     defaultProperties: [],
-                    properties: propertyDefinitions
+                    properties: propertyDefinitions,
+                    required: required
                 };
                 if (asRef) {
                     this.reffedDefinitions[fullName] = definition;
@@ -237,6 +243,7 @@ var TJS;
             var useRef = true;
             var generator = new JsonSchemaGenerator(allSymbols, inheritingTypes, tc, useRef);
             var definition = generator.getClassDefinitionByName(fullTypeName);
+            definition["$schema"] = "http://json-schema.org/draft-04/schema#";
             return definition;
         }
         else {
