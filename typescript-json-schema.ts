@@ -290,7 +290,8 @@ export module TJS {
 
             const useRef = true;
             const generator = new JsonSchemaGenerator(allSymbols, inheritingTypes, tc, useRef);
-            const definition = generator.getClassDefinitionByName(fullTypeName);
+            let definition = generator.getClassDefinitionByName(fullTypeName);
+            definition["$schema"] = "http://json-schema.org/draft-04/schema#";
             return definition;
         } else {
             diagnostics.forEach((diagnostic) => console.warn(diagnostic.messageText + " " + diagnostic.file.fileName + " " + diagnostic.start));
