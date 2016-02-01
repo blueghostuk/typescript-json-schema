@@ -236,6 +236,10 @@ export module TJS {
                     properties: propertyDefinitions,
                     required: required
                 };
+                
+                if (required.length === 0) {
+                    delete definition.required;
+                }
 
                 if (asRef) {
                     this.reffedDefinitions[fullName] = definition;
