@@ -226,7 +226,9 @@ export module TJS {
                 const required = props.filter((prop) => {
                     return (prop.flags & ts.SymbolFlags.Optional) === 0 && // not optional
                         // and is a property, variable or accessor
-                        (prop.flags & (ts.SymbolFlags.Property | ts.SymbolFlags.Variable | ts.SymbolFlags.Accessor)) === 1;
+                        ( (prop.flags & ts.SymbolFlags.Property) === 1 ||
+                          (prop.flags & ts.SymbolFlags.Variable) === 1 ||
+                          (prop.flags & ts.SymbolFlags.Accessor) === 1);
                 }).map((prop) => {
                     return prop.name;
                 });

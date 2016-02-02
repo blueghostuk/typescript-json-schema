@@ -175,7 +175,9 @@ var TJS;
                 }, {});
                 var required = props.filter(function (prop) {
                     return (prop.flags & 536870912) === 0 &&
-                        (prop.flags & (4 | 3 | 98304)) === 1;
+                        ((prop.flags & 4) === 1 ||
+                            (prop.flags & 3) === 1 ||
+                            (prop.flags & 98304) === 1);
                 }).map(function (prop) {
                     return prop.name;
                 });
