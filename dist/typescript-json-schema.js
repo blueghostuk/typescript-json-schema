@@ -3,9 +3,8 @@ var glob = require("glob");
 var vm = require("vm");
 var TJS;
 (function (TJS) {
-    var JsonSchemaGenerator = (function () {
-        function JsonSchemaGenerator(allSymbols, inheritingTypes, tc, useRef) {
-            if (useRef === void 0) { useRef = false; }
+    class JsonSchemaGenerator {
+        constructor(allSymbols, inheritingTypes, tc, useRef = false) {
             this.useRef = useRef;
             this.sandbox = { sandboxvar: null };
             this.reffedDefinitions = {};
@@ -13,28 +12,24 @@ var TJS;
             this.inheritingTypes = inheritingTypes;
             this.tc = tc;
         }
-        Object.defineProperty(JsonSchemaGenerator.prototype, "ReffedDefinitions", {
-            get: function () {
-                return this.reffedDefinitions;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        JsonSchemaGenerator.prototype.copyValidationKeywords = function (comment, to) {
+        get ReffedDefinitions() {
+            return this.reffedDefinitions;
+        }
+        copyValidationKeywords(comment, to) {
             JsonSchemaGenerator.annotedValidationKeywordPattern.lastIndex = 0;
-            var annotation;
+            let annotation;
             while ((annotation = JsonSchemaGenerator.annotedValidationKeywordPattern.exec(comment))) {
-                var annotationTokens = annotation[0].split(" ");
-                var keyword = annotationTokens[0].slice(1);
-                var path = keyword.split(".");
-                var context = null;
+                const annotationTokens = annotation[0].split(" ");
+                let keyword = annotationTokens[0].slice(1);
+                const path = keyword.split(".");
+                let context = null;
                 if (path.length > 1) {
                     context = path[0];
                     keyword = path[1];
                 }
                 keyword = keyword.replace("TJS-", "");
                 if (JsonSchemaGenerator.validationKeywords.indexOf(keyword) >= 0 || JsonSchemaGenerator.validationKeywords.indexOf("TJS-" + keyword) >= 0) {
-                    var value = annotationTokens.length > 1 ? annotationTokens.slice(1).join(" ") : "";
+                    let value = annotationTokens.length > 1 ? annotationTokens.slice(1).join(" ") : "";
                     value = value.replace(/^\s+|\s+$/gm, "");
                     try {
                         value = JSON.parse(value);
@@ -51,37 +46,36 @@ var TJS;
                     }
                 }
             }
-        };
-        JsonSchemaGenerator.prototype.copyDescription = function (comment, to) {
-            var delimiter = "@";
-            var delimiterIndex = comment.indexOf(delimiter);
-            var description = comment.slice(0, delimiterIndex < 0 ? comment.length : delimiterIndex);
+        }
+        copyDescription(comment, to) {
+            const delimiter = "@";
+            const delimiterIndex = comment.indexOf(delimiter);
+            const description = comment.slice(0, delimiterIndex < 0 ? comment.length : delimiterIndex);
             if (description.length > 0) {
                 to.description = description.replace(/\s+$/g, "");
             }
             return delimiterIndex < 0 ? "" : comment.slice(delimiterIndex);
-        };
-        JsonSchemaGenerator.prototype.parseCommentsIntoDefinition = function (comments, definition) {
+        }
+        parseCommentsIntoDefinition(comments, definition) {
             if (!comments || !comments.length) {
                 return;
             }
-            var joined = comments.map(function (comment) { return comment.text.trim(); }).join("\n");
+            let joined = comments.map(comment => comment.text.trim()).join("\n");
             joined = this.copyDescription(joined, definition);
             this.copyValidationKeywords(joined, definition);
-        };
-        JsonSchemaGenerator.prototype.getDefinitionForType = function (propertyType, tc) {
-            var _this = this;
+        }
+        getDefinitionForType(propertyType, tc) {
             if (propertyType.flags & 16384) {
-                var unionType = propertyType;
-                var oneOf = unionType.types.map(function (propType) {
-                    return _this.getDefinitionForType(propType, tc);
+                const unionType = propertyType;
+                const oneOf = unionType.types.map((propType) => {
+                    return this.getDefinitionForType(propType, tc);
                 });
                 return {
                     "oneOf": oneOf
                 };
             }
-            var propertyTypeString = tc.typeToString(propertyType, undefined, 128);
-            var definition = {};
+            const propertyTypeString = tc.typeToString(propertyType, undefined, 128);
+            let definition = {};
             switch (propertyTypeString.toLowerCase()) {
                 case "string":
                     definition.type = "string";
@@ -97,29 +91,29 @@ var TJS;
                     break;
                 default:
                     if (propertyType.getSymbol().getName() == "Array") {
-                        var arrayType = propertyType.typeArguments[0];
+                        const arrayType = propertyType.typeArguments[0];
                         definition.type = "array";
                         definition.items = this.getDefinitionForType(arrayType, tc);
                     }
                     else {
-                        var definition_1 = this.getClassDefinition(propertyType, tc);
-                        return definition_1;
+                        const definition = this.getClassDefinition(propertyType, tc);
+                        return definition;
                     }
             }
             return definition;
-        };
-        JsonSchemaGenerator.prototype.getDefinitionForProperty = function (prop, tc, node) {
-            var propertyName = prop.getName();
-            var propertyType = tc.getTypeOfSymbolAtLocation(prop, node);
-            var propertyTypeString = tc.typeToString(propertyType, undefined, 128);
-            var definition = this.getDefinitionForType(propertyType, tc);
+        }
+        getDefinitionForProperty(prop, tc, node) {
+            const propertyName = prop.getName();
+            const propertyType = tc.getTypeOfSymbolAtLocation(prop, node);
+            const propertyTypeString = tc.typeToString(propertyType, undefined, 128);
+            let definition = this.getDefinitionForType(propertyType, tc);
             definition.title = propertyName;
-            var comments = prop.getDocumentationComment();
+            const comments = prop.getDocumentationComment();
             this.parseCommentsIntoDefinition(comments, definition);
             if (definition.hasOwnProperty("ignore")) {
                 return null;
             }
-            var initial = prop.valueDeclaration.initializer;
+            let initial = prop.valueDeclaration.initializer;
             if (initial) {
                 if (initial.expression) {
                     console.warn("initializer is expression for property " + propertyName);
@@ -129,7 +123,7 @@ var TJS;
                 }
                 else {
                     try {
-                        var sandbox = { sandboxvar: null };
+                        const sandbox = { sandboxvar: null };
                         vm.runInNewContext("sandboxvar=" + initial.getText(), sandbox);
                         initial = sandbox.sandboxvar;
                         if (initial == null) {
@@ -147,39 +141,37 @@ var TJS;
                 }
             }
             return definition;
-        };
-        JsonSchemaGenerator.prototype.getClassDefinition = function (clazzType, tc, asRef) {
-            var _this = this;
-            if (asRef === void 0) { asRef = this.useRef; }
-            var node = clazzType.getSymbol().getDeclarations()[0];
-            var clazz = node;
-            var props = tc.getPropertiesOfType(clazzType);
-            var fullName = tc.typeToString(clazzType, undefined, 128);
+        }
+        getClassDefinition(clazzType, tc, asRef = this.useRef) {
+            const node = clazzType.getSymbol().getDeclarations()[0];
+            const clazz = node;
+            const props = tc.getPropertiesOfType(clazzType);
+            const fullName = tc.typeToString(clazzType, undefined, 128);
             if (clazz.flags & 256) {
-                var oneOf = this.inheritingTypes[fullName].map(function (typename) {
-                    return _this.getClassDefinition(_this.allSymbols[typename], tc);
+                const oneOf = this.inheritingTypes[fullName].map((typename) => {
+                    return this.getClassDefinition(this.allSymbols[typename], tc);
                 });
-                var definition = {
+                const definition = {
                     "oneOf": oneOf
                 };
                 return definition;
             }
             else {
-                var propertyDefinitions = props.reduce(function (all, prop) {
-                    var propertyName = prop.getName();
-                    var definition = _this.getDefinitionForProperty(prop, tc, node);
+                const propertyDefinitions = props.reduce((all, prop) => {
+                    const propertyName = prop.getName();
+                    const definition = this.getDefinitionForProperty(prop, tc, node);
                     if (definition != null) {
                         all[propertyName] = definition;
                     }
                     return all;
                 }, {});
-                var required = props.filter(function (prop) {
+                const required = props.filter((prop) => {
                     return (prop.flags & 536870912) === 0 &&
                         (prop.flags & (4 | 3 | 98304)) === 1;
-                }).map(function (prop) {
+                }).map((prop) => {
                     return prop.name;
                 });
-                var definition = {
+                const definition = {
                     type: "object",
                     title: fullName,
                     defaultProperties: [],
@@ -199,39 +191,41 @@ var TJS;
                     return definition;
                 }
             }
-        };
-        JsonSchemaGenerator.prototype.getClassDefinitionByName = function (clazzName, includeReffedDefinitions) {
-            if (includeReffedDefinitions === void 0) { includeReffedDefinitions = true; }
-            var def = this.getClassDefinition(this.allSymbols[clazzName], this.tc);
+        }
+        getClassDefinitionByName(clazzName, includeReffedDefinitions = true) {
+            let def = this.getClassDefinition(this.allSymbols[clazzName], this.tc);
             if (this.useRef && includeReffedDefinitions) {
                 def.definitions = this.reffedDefinitions;
             }
             return def;
-        };
-        JsonSchemaGenerator.validationKeywords = [
-            "ignore", "description", "type", "minimum", "exclusiveMinimum", "maximum",
-            "exclusiveMaximum", "multipleOf", "minLength", "maxLength", "format",
-            "pattern", "minItems", "maxItems", "uniqueItems", "default",
-            "additionalProperties", "enum"];
-        JsonSchemaGenerator.annotedValidationKeywordPattern = /@[a-z.-]+\s*[^@]+/gi;
-        return JsonSchemaGenerator;
-    })();
+        }
+    }
+    JsonSchemaGenerator.validationKeywords = [
+        "ignore", "description", "type", "minimum", "exclusiveMinimum", "maximum",
+        "exclusiveMaximum", "multipleOf", "minLength", "maxLength", "format",
+        "pattern", "minItems", "maxItems", "uniqueItems", "default",
+        "additionalProperties", "enum"];
+    JsonSchemaGenerator.annotedValidationKeywordPattern = /@[a-z.-]+\s*[^@]+/gi;
     function generateSchema(compileFiles, fullTypeName) {
-        var options = { noEmit: true, emitDecoratorMetadata: true, experimentalDecorators: true, target: 1, module: 1 };
-        var program = ts.createProgram(compileFiles, options);
-        var tc = program.getTypeChecker();
-        var diagnostics = program.getGlobalDiagnostics().concat(program.getDeclarationDiagnostics(), program.getSemanticDiagnostics());
+        const options = { noEmit: true, emitDecoratorMetadata: true, experimentalDecorators: true, target: 1, module: 1 };
+        const program = ts.createProgram(compileFiles, options);
+        const tc = program.getTypeChecker();
+        var diagnostics = [
+            ...program.getGlobalDiagnostics(),
+            ...program.getDeclarationDiagnostics(),
+            ...program.getSemanticDiagnostics()
+        ];
         if (diagnostics.length == 0) {
-            var allSymbols = {};
-            var inheritingTypes = {};
-            program.getSourceFiles().forEach(function (sourceFile) {
+            const allSymbols = {};
+            const inheritingTypes = {};
+            program.getSourceFiles().forEach(sourceFile => {
                 function inspect(node, tc) {
-                    if (node.kind == 214 || node.kind == 215) {
-                        var nodeType = tc.getTypeAtLocation(node);
-                        var fullName = tc.typeToString(nodeType, undefined, 128);
+                    if (node.kind == 212 || node.kind == 213) {
+                        const nodeType = tc.getTypeAtLocation(node);
+                        const fullName = tc.typeToString(nodeType, undefined, 128);
                         allSymbols[fullName] = nodeType;
-                        nodeType.getBaseTypes().forEach(function (baseType) {
-                            var baseName = tc.typeToString(baseType, undefined, 128);
+                        nodeType.getBaseTypes().forEach(baseType => {
+                            const baseName = tc.typeToString(baseType, undefined, 128);
                             if (!inheritingTypes[baseName]) {
                                 inheritingTypes[baseName] = [];
                             }
@@ -239,25 +233,25 @@ var TJS;
                         });
                     }
                     else {
-                        ts.forEachChild(node, function (node) { return inspect(node, tc); });
+                        ts.forEachChild(node, (node) => inspect(node, tc));
                     }
                 }
                 inspect(sourceFile, tc);
             });
-            var useRef = true;
-            var generator = new JsonSchemaGenerator(allSymbols, inheritingTypes, tc, useRef);
-            var definition = generator.getClassDefinitionByName(fullTypeName);
+            const useRef = true;
+            const generator = new JsonSchemaGenerator(allSymbols, inheritingTypes, tc, useRef);
+            let definition = generator.getClassDefinitionByName(fullTypeName);
             definition["$schema"] = "http://json-schema.org/draft-04/schema#";
             return definition;
         }
         else {
-            diagnostics.forEach(function (diagnostic) { return console.warn(diagnostic.messageText + " " + diagnostic.file.fileName + " " + diagnostic.start); });
+            diagnostics.forEach((diagnostic) => console.warn(diagnostic.messageText + " " + diagnostic.file.fileName + " " + diagnostic.start));
         }
     }
     TJS.generateSchema = generateSchema;
     function exec(filePattern, fullTypeName) {
-        var files = glob.sync(filePattern);
-        var definition = TJS.generateSchema(files, fullTypeName);
+        const files = glob.sync(filePattern);
+        const definition = TJS.generateSchema(files, fullTypeName);
         console.log(JSON.stringify(definition, null, 4));
     }
     TJS.exec = exec;
