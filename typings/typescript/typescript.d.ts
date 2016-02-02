@@ -1,4 +1,9 @@
-﻿/*! *****************************************************************************
+// Type definitions for TypeScript API v0.4.0
+// Project: http://www.typescriptlang.org/
+// Definitions by: Microsoft TypeScript <http://typescriptlang.org>
+// Definitions: https://github.com/borisyankov/DefinitelyTyped
+
+/*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved. 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this file except in compliance with the License. You may obtain a copy of the
@@ -13,7 +18,7 @@ See the Apache Version 2.0 License for specific language governing permissions
 and limitations under the License.
 ***************************************************************************** */
 
-declare namespace ts {
+declare module "typescript" {
     interface Map<T> {
         [index: string]: T;
     }
@@ -1208,11 +1213,9 @@ declare namespace ts {
         UnionOrIntersection = 49152,
         StructuredType = 130048,
     }
-    type DestructuringPattern = BindingPattern | ObjectLiteralExpression | ArrayLiteralExpression;
     interface Type {
         flags: TypeFlags;
         symbol?: Symbol;
-        pattern?: DestructuringPattern;
     }
     interface StringLiteralType extends Type {
         text: string;
@@ -1239,6 +1242,7 @@ declare namespace ts {
     }
     interface TupleType extends ObjectType {
         elementTypes: Type[];
+        baseArrayType: TypeReference;
     }
     interface UnionOrIntersectionType extends Type {
         types: Type[];
@@ -1409,7 +1413,7 @@ declare namespace ts {
         newLength: number;
     }
 }
-declare namespace ts {
+declare module "typescript" {
     interface System {
         args: string[];
         newLine: string;
@@ -1433,7 +1437,7 @@ declare namespace ts {
     }
     var sys: System;
 }
-declare namespace ts {
+declare module "typescript" {
     interface ErrorCallback {
         (message: DiagnosticMessage, length: number): void;
     }
@@ -1478,7 +1482,7 @@ declare namespace ts {
     function isIdentifierPart(ch: number, languageVersion: ScriptTarget): boolean;
     function createScanner(languageVersion: ScriptTarget, skipTrivia: boolean, languageVariant?: LanguageVariant, text?: string, onError?: ErrorCallback, start?: number, length?: number): Scanner;
 }
-declare namespace ts {
+declare module "typescript" {
     function getDefaultLibFileName(options: CompilerOptions): string;
     function textSpanEnd(span: TextSpan): number;
     function textSpanIsEmpty(span: TextSpan): boolean;
@@ -1508,14 +1512,14 @@ declare namespace ts {
     function collapseTextChangeRangesAcrossMultipleVersions(changes: TextChangeRange[]): TextChangeRange;
     function getTypeParameterOwner(d: Declaration): Declaration;
 }
-declare namespace ts {
+declare module "typescript" {
     function getNodeConstructor(kind: SyntaxKind): new () => Node;
     function createNode(kind: SyntaxKind): Node;
     function forEachChild<T>(node: Node, cbNode: (node: Node) => T, cbNodeArray?: (nodes: Node[]) => T): T;
     function createSourceFile(fileName: string, sourceText: string, languageVersion: ScriptTarget, setParentNodes?: boolean): SourceFile;
     function updateSourceFile(sourceFile: SourceFile, newText: string, textChangeRange: TextChangeRange, aggressiveChecks?: boolean): SourceFile;
 }
-declare namespace ts {
+declare module "typescript" {
     const version: string;
     function findConfigFile(searchPath: string): string;
     function resolveTripleslashReference(moduleName: string, containingFile: string): string;
@@ -1527,13 +1531,13 @@ declare namespace ts {
     function flattenDiagnosticMessageText(messageText: string | DiagnosticMessageChain, newLine: string): string;
     function createProgram(rootNames: string[], options: CompilerOptions, host?: CompilerHost, oldProgram?: Program): Program;
 }
-declare namespace ts {
+declare module "typescript" {
     function parseCommandLine(commandLine: string[], readFile?: (path: string) => string): ParsedCommandLine;
     /**
       * Read tsconfig.json file
       * @param fileName The path to the config file
       */
-    function readConfigFile(fileName: string, readFile: (path: string) => string): {
+    function readConfigFile(fileName: string): {
         config?: any;
         error?: Diagnostic;
     };
@@ -1554,7 +1558,7 @@ declare namespace ts {
       */
     function parseConfigFile(json: any, host: ParseConfigHost, basePath: string): ParsedCommandLine;
 }
-declare namespace ts {
+declare module "typescript" {
     /** The version of the language service API */
     let servicesVersion: string;
     interface Node {
@@ -2142,5 +2146,3 @@ declare namespace ts {
       */
     function getDefaultLibFilePath(options: CompilerOptions): string;
 }
-
-export = ts;
