@@ -235,7 +235,8 @@ export module TJS {
                     title: fullName,
                     defaultProperties: [], // TODO: set via comment or parameter instead of hardcode here, json-editor specific
                     properties: propertyDefinitions,
-                    required: required
+                    required: required,
+                    additionalProperties: false // TODO: make configurable
                 };
                 
                 // delete required if length is zero, empty array is not valid schema

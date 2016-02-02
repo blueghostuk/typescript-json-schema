@@ -184,7 +184,8 @@ var TJS;
                     title: fullName,
                     defaultProperties: [],
                     properties: propertyDefinitions,
-                    required: required
+                    required: required,
+                    additionalProperties: false
                 };
                 if (required.length === 0) {
                     delete definition.required;
