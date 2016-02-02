@@ -19,12 +19,10 @@
     "type": "git",
     "url": "git@github.com:YousefED/typescript-json-schema.git"
   },
-  "licenses": [
-    {
-      "type": "Apache",
-      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-    }
-  ],
+  "licenses": [{
+    "type": "Apache",
+    "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+  }],
   "scripts": {
     "build": "tsc -p ."
   },
@@ -35,8 +33,5 @@
     "forms",
     "jsonschema",
     "schema"
-  ],
-  "devDependencies": {
-    "tsd": "^0.6.5"
-  }
+  ]
 }
