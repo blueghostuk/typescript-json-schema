@@ -222,9 +222,11 @@ export module TJS {
                     return all;
                 }, {});
 
-                // temp make everything required
+                // get required properties
                 const required = props.filter((prop) => {
-                    return (prop.flags & ts.SymbolFlags.Optional) === 0;
+                    return (prop.flags & ts.SymbolFlags.Optional) === 0 && // not optional
+                        // and is a property, variable or accessor
+                        (prop.flags & (ts.SymbolFlags.Property | ts.SymbolFlags.Variable | ts.SymbolFlags.Accessor)) === 1;
                 }).map((prop) => {
                     return prop.name;
                 });
@@ -237,6 +239,7 @@ export module TJS {
                     required: required
                 };
                 
+                // delete required if length is zero, empty array is not valid schema
                 if (required.length === 0) {
                     delete definition.required;
                 }
