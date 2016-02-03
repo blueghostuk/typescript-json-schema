@@ -13,13 +13,11 @@ export module TJS {
             "additionalProperties", "enum"];
 
         private static annotedValidationKeywordPattern = /@[a-z.-]+\s*[^@]+/gi;
-        //private static primitiveTypes = ["string", "number", "boolean", "any"];
+        // private static primitiveTypes = ["string", "number", "boolean", "any"];
 
         private allSymbols: { [name: string]: ts.Type };
         private inheritingTypes: { [baseName: string]: string[] };
         private tc: ts.TypeChecker;
-
-        private sandbox = { sandboxvar: null };
 
         private reffedDefinitions: { [key: string]: any } = {};
 
@@ -59,7 +57,8 @@ export module TJS {
                 keyword = keyword.replace("TJS-", "");
 
                 // case sensitive check inside the dictionary
-                if (JsonSchemaGenerator.validationKeywords.indexOf(keyword) >= 0 || JsonSchemaGenerator.validationKeywords.indexOf("TJS-" + keyword) >= 0) {
+                if (JsonSchemaGenerator.validationKeywords.indexOf(keyword) >= 0 ||
+                    JsonSchemaGenerator.validationKeywords.indexOf("TJS-" + keyword) >= 0) {
                     let value: string = annotationTokens.length > 1 ? annotationTokens.slice(1).join(" ") : "";
                     value = value.replace(/^\s+|\s+$/gm, "");  // trim all whitepsace characters, including newlines
                     try {
@@ -70,8 +69,7 @@ export module TJS {
                             to[context] = {};
                         }
                         to[context][keyword] = value;
-                    }
-                    else {
+                    } else {
                         to[keyword] = value;
                     }
                 }
@@ -137,7 +135,7 @@ export module TJS {
                     definition.type = "object";
                     break;
                 default:
-                    if (propertyType.getSymbol().getName() == "Array") {
+                    if (propertyType.getSymbol().getName() === "Array") {
                         const arrayType = (<ts.TypeReference>propertyType).typeArguments[0];
                         definition.type = "array";
                         definition.items = this.getDefinitionForType(arrayType, tc);
@@ -152,9 +150,6 @@ export module TJS {
         private getDefinitionForProperty(prop: ts.Symbol, tc: ts.TypeChecker, node: ts.Node) {
             const propertyName = prop.getName();
             const propertyType = tc.getTypeOfSymbolAtLocation(prop, node);
-            const propertyTypeString = tc.typeToString(propertyType, undefined, ts.TypeFormatFlags.UseFullyQualifiedType);
-
-
 
             let definition: any = this.getDefinitionForType(propertyType, tc);
             definition.title = propertyName;
@@ -182,7 +177,10 @@ export module TJS {
                         initial = sandbox.sandboxvar;
                         if (initial == null) {
 
-                        } else if (typeof (initial) === "string" || typeof (initial) === "number" || typeof (initial) === "boolean" || Object.prototype.toString.call(initial) === '[object Array]') {
+                        } else if (typeof (initial) === "string" ||
+                            typeof (initial) === "number" ||
+                            typeof (initial) === "boolean" ||
+                            Object.prototype.toString.call(initial) === "[object Array]") {
                             definition.default = initial;
                         } else {
                             console.warn("unknown initializer for property " + propertyName + ": " + initial);
@@ -238,7 +236,7 @@ export module TJS {
                     required: required,
                     additionalProperties: false // TODO: make configurable
                 };
-                
+
                 // delete required if length is zero, empty array is not valid schema
                 if (required.length === 0) {
                     delete definition.required;
@@ -267,7 +265,13 @@ export module TJS {
     }
 
     export function generateSchema(compileFiles: string[], fullTypeName: string) {
-        const options: ts.CompilerOptions = { noEmit: true, emitDecoratorMetadata: true, experimentalDecorators: true, target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS };
+        const options: ts.CompilerOptions = {
+            noEmit: true,
+            emitDecoratorMetadata: true,
+            experimentalDecorators: true,
+            target: ts.ScriptTarget.ES5,
+            module: ts.ModuleKind.CommonJS
+        };
         const program = ts.createProgram(compileFiles, options);
         const tc = program.getTypeChecker();
 
@@ -278,14 +282,14 @@ export module TJS {
         ];
 
 
-        if (diagnostics.length == 0) {
+        if (diagnostics.length === 0) {
 
             const allSymbols: { [name: string]: ts.Type } = {};
             const inheritingTypes: { [baseName: string]: string[] } = {};
 
             program.getSourceFiles().forEach(sourceFile => {
                 function inspect(node: ts.Node, tc: ts.TypeChecker) {
-                    if (node.kind == ts.SyntaxKind.ClassDeclaration || node.kind == ts.SyntaxKind.InterfaceDeclaration) {
+                    if (node.kind === ts.SyntaxKind.ClassDeclaration || node.kind === ts.SyntaxKind.InterfaceDeclaration) {
                         const nodeType = tc.getTypeAtLocation(node);
                         const fullName = tc.typeToString(nodeType, undefined, ts.TypeFormatFlags.UseFullyQualifiedType);
                         allSymbols[fullName] = nodeType;
@@ -309,7 +313,9 @@ export module TJS {
             definition["$schema"] = "http://json-schema.org/draft-04/schema#";
             return definition;
         } else {
-            diagnostics.forEach((diagnostic) => console.warn(diagnostic.messageText + " " + diagnostic.file.fileName + " " + diagnostic.start));
+            diagnostics.forEach((diagnostic) => {
+                console.warn(diagnostic.messageText + " " + diagnostic.file.fileName + " " + diagnostic.start)
+            });
         }
     }
 
@@ -317,7 +323,7 @@ export module TJS {
         const files: string[] = glob.sync(filePattern);
         const definition = TJS.generateSchema(files, fullTypeName);
         console.log(JSON.stringify(definition, null, 4));
-        //fs.writeFile(outFile, JSON.stringify(definition, null, 4));
+        // fs.writeFile(outFile, JSON.stringify(definition, null, 4));
     }
 }
 
@@ -330,6 +336,6 @@ if (typeof window === "undefined" && require.main === module) {
     }
 }
 
-//TJS.exec("example/**/*.ts", "Invoice");
-//node typescript-json-schema.js example/**/*.ts Invoice
-//debugger;
+// TJS.exec("example/**/*.ts", "Invoice");
+// node typescript-json-schema.js example/**/*.ts Invoice
+// debugger;
