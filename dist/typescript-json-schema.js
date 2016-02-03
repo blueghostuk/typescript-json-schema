@@ -7,7 +7,6 @@ var TJS;
         function JsonSchemaGenerator(allSymbols, inheritingTypes, tc, useRef) {
             if (useRef === void 0) { useRef = false; }
             this.useRef = useRef;
-            this.sandbox = { sandboxvar: null };
             this.reffedDefinitions = {};
             this.allSymbols = allSymbols;
             this.inheritingTypes = inheritingTypes;
@@ -33,7 +32,8 @@ var TJS;
                     keyword = path[1];
                 }
                 keyword = keyword.replace("TJS-", "");
-                if (JsonSchemaGenerator.validationKeywords.indexOf(keyword) >= 0 || JsonSchemaGenerator.validationKeywords.indexOf("TJS-" + keyword) >= 0) {
+                if (JsonSchemaGenerator.validationKeywords.indexOf(keyword) >= 0 ||
+                    JsonSchemaGenerator.validationKeywords.indexOf("TJS-" + keyword) >= 0) {
                     var value = annotationTokens.length > 1 ? annotationTokens.slice(1).join(" ") : "";
                     value = value.replace(/^\s+|\s+$/gm, "");
                     try {
@@ -96,7 +96,7 @@ var TJS;
                     definition.type = "object";
                     break;
                 default:
-                    if (propertyType.getSymbol().getName() == "Array") {
+                    if (propertyType.getSymbol().getName() === "Array") {
                         var arrayType = propertyType.typeArguments[0];
                         definition.type = "array";
                         definition.items = this.getDefinitionForType(arrayType, tc);
@@ -111,7 +111,6 @@ var TJS;
         JsonSchemaGenerator.prototype.getDefinitionForProperty = function (prop, tc, node) {
             var propertyName = prop.getName();
             var propertyType = tc.getTypeOfSymbolAtLocation(prop, node);
-            var propertyTypeString = tc.typeToString(propertyType, undefined, 128);
             var definition = this.getDefinitionForType(propertyType, tc);
             definition.title = propertyName;
             var comments = prop.getDocumentationComment();
@@ -134,7 +133,10 @@ var TJS;
                         initial = sandbox.sandboxvar;
                         if (initial == null) {
                         }
-                        else if (typeof (initial) === "string" || typeof (initial) === "number" || typeof (initial) === "boolean" || Object.prototype.toString.call(initial) === '[object Array]') {
+                        else if (typeof (initial) === "string" ||
+                            typeof (initial) === "number" ||
+                            typeof (initial) === "boolean" ||
+                            Object.prototype.toString.call(initial) === "[object Array]") {
                             definition.default = initial;
                         }
                         else {
@@ -165,6 +167,7 @@ var TJS;
                 return definition;
             }
             else {
+                console.log("kind = " + clazz.kind + ", name = " + fullName);
                 var propertyDefinitions = props.reduce(function (all, prop) {
                     var propertyName = prop.getName();
                     var definition = _this.getDefinitionForProperty(prop, tc, node);
@@ -218,16 +221,22 @@ var TJS;
         return JsonSchemaGenerator;
     })();
     function generateSchema(compileFiles, fullTypeName) {
-        var options = { noEmit: true, emitDecoratorMetadata: true, experimentalDecorators: true, target: 1, module: 1 };
+        var options = {
+            noEmit: true,
+            emitDecoratorMetadata: true,
+            experimentalDecorators: true,
+            target: 1,
+            module: 1
+        };
         var program = ts.createProgram(compileFiles, options);
         var tc = program.getTypeChecker();
         var diagnostics = program.getGlobalDiagnostics().concat(program.getDeclarationDiagnostics(), program.getSemanticDiagnostics());
-        if (diagnostics.length == 0) {
+        if (diagnostics.length === 0) {
             var allSymbols = {};
             var inheritingTypes = {};
             program.getSourceFiles().forEach(function (sourceFile) {
                 function inspect(node, tc) {
-                    if (node.kind == 214 || node.kind == 215) {
+                    if (node.kind === 214 || node.kind === 215) {
                         var nodeType = tc.getTypeAtLocation(node);
                         var fullName = tc.typeToString(nodeType, undefined, 128);
                         allSymbols[fullName] = nodeType;
@@ -252,7 +261,9 @@ var TJS;
             return definition;
         }
         else {
-            diagnostics.forEach(function (diagnostic) { return console.warn(diagnostic.messageText + " " + diagnostic.file.fileName + " " + diagnostic.start); });
+            diagnostics.forEach(function (diagnostic) {
+                console.warn(diagnostic.messageText + " " + diagnostic.file.fileName + " " + diagnostic.start);
+            });
         }
     }
     TJS.generateSchema = generateSchema;
