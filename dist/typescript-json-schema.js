@@ -102,8 +102,7 @@ var TJS;
                         definition.items = this.getDefinitionForType(arrayType, tc);
                     }
                     else {
-                        var definition_1 = this.getClassDefinition(propertyType, tc);
-                        return definition_1;
+                        return this.getClassDefinition(propertyType, tc);
                     }
             }
             return definition;
@@ -154,54 +153,71 @@ var TJS;
             var _this = this;
             if (asRef === void 0) { asRef = this.useRef; }
             var node = clazzType.getSymbol().getDeclarations()[0];
-            var clazz = node;
-            var props = tc.getPropertiesOfType(clazzType);
             var fullName = tc.typeToString(clazzType, undefined, 128);
-            if (clazz.flags & 256) {
-                var oneOf = this.inheritingTypes[fullName].map(function (typename) {
-                    return _this.getClassDefinition(_this.allSymbols[typename], tc);
-                });
-                var definition = {
-                    "oneOf": oneOf
-                };
-                return definition;
-            }
-            else {
-                console.log("kind = " + clazz.kind + ", name = " + fullName);
-                var propertyDefinitions = props.reduce(function (all, prop) {
-                    var propertyName = prop.getName();
-                    var definition = _this.getDefinitionForProperty(prop, tc, node);
-                    if (definition != null) {
-                        all[propertyName] = definition;
-                    }
-                    return all;
-                }, {});
-                var required = props.filter(function (prop) {
-                    return (prop.flags & 536870912) === 0 &&
-                        (prop.flags & 8192) === 0;
-                }).map(function (prop) {
-                    return prop.name;
-                });
-                var definition = {
-                    type: "object",
-                    title: fullName,
-                    defaultProperties: [],
-                    properties: propertyDefinitions,
-                    required: required,
-                    additionalProperties: false
-                };
-                if (required.length === 0) {
-                    delete definition.required;
-                }
-                if (asRef) {
-                    this.reffedDefinitions[fullName] = definition;
-                    return {
-                        "$ref": "#/definitions/" + fullName
+            switch (node.kind) {
+                case 217:
+                    var enumValues = node.members
+                        .map(function (member) { return member.name.getText(); });
+                    var definition = {
+                        "enum": enumValues
                     };
-                }
-                else {
-                    return definition;
-                }
+                    if (asRef) {
+                        this.reffedDefinitions[fullName] = definition;
+                        return {
+                            "$ref": "#/definitions/" + fullName
+                        };
+                    }
+                    else {
+                        return definition;
+                    }
+                default:
+                    var clazz = node;
+                    var props = tc.getPropertiesOfType(clazzType);
+                    if (clazz.flags & 256) {
+                        var oneOf = this.inheritingTypes[fullName].map(function (typename) {
+                            return _this.getClassDefinition(_this.allSymbols[typename], tc);
+                        });
+                        return {
+                            "oneOf": oneOf
+                        };
+                    }
+                    else {
+                        var propertyDefinitions = props.reduce(function (all, prop) {
+                            var propertyName = prop.getName();
+                            var definition = _this.getDefinitionForProperty(prop, tc, node);
+                            if (definition != null) {
+                                all[propertyName] = definition;
+                            }
+                            return all;
+                        }, {});
+                        var required = props.filter(function (prop) {
+                            return (prop.flags & 536870912) === 0 &&
+                                (prop.flags & 8192) === 0;
+                        }).map(function (prop) {
+                            return prop.name;
+                        });
+                        var definition_1 = {
+                            type: "object",
+                            title: fullName,
+                            defaultProperties: [],
+                            properties: propertyDefinitions,
+                            required: required,
+                            additionalProperties: false
+                        };
+                        if (required.length === 0) {
+                            delete definition_1.required;
+                        }
+                        if (asRef) {
+                            this.reffedDefinitions[fullName] = definition_1;
+                            return {
+                                "$ref": "#/definitions/" + fullName
+                            };
+                        }
+                        else {
+                            return definition_1;
+                        }
+                    }
+                    break;
             }
         };
         JsonSchemaGenerator.prototype.getClassDefinitionByName = function (clazzName, includeReffedDefinitions) {

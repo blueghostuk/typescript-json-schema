@@ -140,8 +140,7 @@ export module TJS {
                         definition.type = "array";
                         definition.items = this.getDefinitionForType(arrayType, tc);
                     } else {
-                        const definition = this.getClassDefinition(propertyType, tc);
-                        return definition;
+                        return this.getClassDefinition(propertyType, tc);
                     }
             }
             return definition;
@@ -196,60 +195,79 @@ export module TJS {
 
         private getClassDefinition(clazzType: ts.Type, tc: ts.TypeChecker, asRef = this.useRef): any {
             const node = clazzType.getSymbol().getDeclarations()[0];
-            const clazz = <ts.ClassDeclaration>node;
-            const props = tc.getPropertiesOfType(clazzType);
             const fullName = tc.typeToString(clazzType, undefined, ts.TypeFormatFlags.UseFullyQualifiedType);
 
-            if (clazz.flags & ts.NodeFlags.Abstract) {
-                const oneOf = this.inheritingTypes[fullName].map((typename) => {
-                    return this.getClassDefinition(this.allSymbols[typename], tc);
-                });
-
-                const definition = {
-                    "oneOf": oneOf
-                };
-
-                return definition;
-            } else {
-                const propertyDefinitions = props.reduce((all, prop) => {
-                    const propertyName = prop.getName();
-                    const definition = this.getDefinitionForProperty(prop, tc, node);
-                    if (definition != null) {
-                        all[propertyName] = definition;
-                    }
-                    return all;
-                }, {});
-
-                // get required properties
-                const required = props.filter((prop) => {
-                    return (prop.flags & ts.SymbolFlags.Optional) === 0 && // not optional
-                        (prop.flags & ts.SymbolFlags.Method) === 0; // not method
-                }).map((prop) => {
-                    return prop.name;
-                });
-
-                const definition = {
-                    type: "object",
-                    title: fullName,
-                    defaultProperties: [], // TODO: set via comment or parameter instead of hardcode here, json-editor specific
-                    properties: propertyDefinitions,
-                    required: required,
-                    additionalProperties: false // TODO: make configurable
-                };
-
-                // delete required if length is zero, empty array is not valid schema
-                if (required.length === 0) {
-                    delete definition.required;
-                }
-
-                if (asRef) {
-                    this.reffedDefinitions[fullName] = definition;
-                    return {
-                        "$ref": "#/definitions/" + fullName
+            switch (node.kind) {
+                case ts.SyntaxKind.EnumDeclaration:
+                    var enumValues = (<ts.EnumDeclaration>node).members
+                        .map((member) => member.name.getText());
+                    const definition = {
+                        "enum": enumValues
                     };
-                } else {
-                    return definition;
-                }
+
+                    if (asRef) {
+                        this.reffedDefinitions[fullName] = definition;
+                        return {
+                            "$ref": "#/definitions/" + fullName
+                        };
+                    } else {
+                        return definition;
+                    }
+
+                default:
+                    const clazz = <ts.ClassDeclaration>node;
+                    const props = tc.getPropertiesOfType(clazzType);
+
+                    if (clazz.flags & ts.NodeFlags.Abstract) {
+                        const oneOf = this.inheritingTypes[fullName].map((typename) => {
+                            return this.getClassDefinition(this.allSymbols[typename], tc);
+                        });
+
+                        return {
+                            "oneOf": oneOf
+                        };
+                    } else {
+                        const propertyDefinitions = props.reduce((all, prop) => {
+                            const propertyName = prop.getName();
+                            const definition = this.getDefinitionForProperty(prop, tc, node);
+                            if (definition != null) {
+                                all[propertyName] = definition;
+                            }
+                            return all;
+                        }, {});
+
+                        // get required properties
+                        const required = props.filter((prop) => {
+                            return (prop.flags & ts.SymbolFlags.Optional) === 0 && // not optional
+                                (prop.flags & ts.SymbolFlags.Method) === 0; // not method
+                        }).map((prop) => {
+                            return prop.name;
+                        });
+
+                        const definition = {
+                            type: "object",
+                            title: fullName,
+                            defaultProperties: [], // TODO: set via comment or parameter instead of hardcode here, json-editor specific
+                            properties: propertyDefinitions,
+                            required: required,
+                            additionalProperties: false // TODO: make configurable
+                        };
+
+                        // delete required if length is zero, empty array is not valid schema
+                        if (required.length === 0) {
+                            delete definition.required;
+                        }
+
+                        if (asRef) {
+                            this.reffedDefinitions[fullName] = definition;
+                            return {
+                                "$ref": "#/definitions/" + fullName
+                            };
+                        } else {
+                            return definition;
+                        }
+                    }
+                    break;
             }
         }
 
